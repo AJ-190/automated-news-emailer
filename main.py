@@ -64,7 +64,9 @@ def job():
         emails = [
             "adysamuel67@gmail.com",
             "adysamuel69@gmail.com",
-            "therealmindset70@gmail.com"
+            "therealmindset70@gmail.com",
+            "ckmensahopp@gmail.com",
+            "sethoowusu12@gmail.com"
         ]
 
         yag = yagmail.SMTP(user=(sender_email, "Addys Automated News"), password=password)
