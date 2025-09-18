@@ -64,8 +64,7 @@ def job():
         recipients = [
             "adysamuel67@gmail.com",
             "adysamuel69@gmail.com",
-            "therealmindset70@gmail.com",
-            "ckmensahopp@gmail.com"
+            "therealmindset70@gmail.com"
         ]
 
         content = "\n\n".join(
