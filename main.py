@@ -85,7 +85,7 @@ def job():
 
 
 # --- Step 4: Schedule the job ---
-schedule.every().day.at("7:30").do(job)
+schedule.every().day.at("07:30").do(job)
 
 print("✅ Scheduler started. Waiting for 07:30 AM daily...")
 
