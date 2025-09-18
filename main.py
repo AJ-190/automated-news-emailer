@@ -1,10 +1,9 @@
+import os
 import requests
 import feedparser
 import pandas as pd
 import yagmail
 from openai import OpenAI
-import schedule
-import time
 from premailer import transform
 
 
@@ -33,12 +32,10 @@ def job():
         print(f"✅ Processed entry {i+1}: {title}")
 
     df = pd.DataFrame(items)
-    df.to_csv("france24_news.csv", index=False, encoding="utf-8")
-    # print(f"💾 Saved {len(df)} items to france24_news.csv")
 
     # --- Step 2: Summarize using Algion API ---
     client = OpenAI(
-        api_key="123123",
+        api_key=os.environ["ALGION_API_KEY"],
         base_url="https://api.algion.dev/v1"
     )
 
@@ -60,14 +57,9 @@ def job():
 
     # --- Step 3: Send email with yagmail (HTML version) ---
     try:
-        sender_email = "adysamuel68@gmail.com"
-        password = "vfxj qepe yygj wkmi"  # Gmail App Password
-        recipients = [
-            "adysamuel67@gmail.com",
-            "adysamuel69@gmail.com",
-            "therealmindset70@gmail.com",
-            "bensonofosuappiah9@gmail.com"
-        ]
+        sender_email = os.environ["SENDER_EMAIL"]
+        password = os.environ["SENDER_PASS"]
+        recipients = os.environ["RECIPIENTS"].split(",")
 
         # Build HTML email content
         html_content = """
@@ -119,7 +111,6 @@ def job():
           <h2>🌍 Daily France24 Digest</h2>
         """
 
-        # Loop through rows and add them as styled cards
         for _, row in df.iterrows():
             html_content += f"""
             <div class="news-card">
@@ -129,13 +120,9 @@ def job():
             </div>
             """
 
-        # Close the HTML body
-        html_content += """
-        </body>
-        </html>
-        """
+        html_content += "</body></html>"
 
-        # Inline CSS using premailer
+        # Inline CSS
         inlined_html = transform(html_content)
 
         # Send styled HTML email
@@ -143,7 +130,7 @@ def job():
         yag.send(
             to=recipients,
             subject="Daily France24 Digest 🌍",
-            contents=[inlined_html],  # send as HTML
+            contents=[inlined_html],
             headers={"from": "Addy's Automated News"}
         )
 
@@ -153,11 +140,5 @@ def job():
         print(f"❌ Error sending email: {e}")
 
 
-# --- Step 4: Schedule the job ---
-# You can change the time below as needed (format: "HH:MM")
-schedule.every().day.at("23:28").do(job)
-print("✅ Scheduler started. Waiting for 11:28 PM daily...")
-
-while True:
-    schedule.run_pending()
-    time.sleep(20)     
+if __name__ == "__main__":
+    job()
