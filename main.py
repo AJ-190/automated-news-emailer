@@ -1,4 +1,3 @@
-
 import requests
 import feedparser
 import pandas as pd
@@ -35,7 +34,7 @@ def job():
 
     df = pd.DataFrame(items)
     df.to_csv("france24_news.csv", index=False, encoding="utf-8")
-    print(f"💾 Saved {len(df)} items to france24_news.csv")
+    # print(f"💾 Saved {len(df)} items to france24_news.csv")
 
     # --- Step 2: Summarize using Algion API ---
     client = OpenAI(
@@ -66,7 +65,8 @@ def job():
         recipients = [
             "adysamuel67@gmail.com",
             "adysamuel69@gmail.com",
-            "therealmindset70@gmail.com"
+            "therealmindset70@gmail.com",
+            "bensonofosuappiah9@gmail.com"
         ]
 
         # Build HTML email content
@@ -138,9 +138,6 @@ def job():
         # Inline CSS using premailer
         inlined_html = transform(html_content)
 
-        # print("Generated HTML Content:")
-        # print(inlined_html)
-
         # Send styled HTML email
         yag = yagmail.SMTP(user=sender_email, password=password)
         yag.send(
@@ -156,12 +153,11 @@ def job():
         print(f"❌ Error sending email: {e}")
 
 
-
 # --- Step 4: Schedule the job ---
-schedule.every().day.at("23:05").do(job)
-
-print("✅ Scheduler started. Waiting for 07:30 AM daily...")
+# You can change the time below as needed (format: "HH:MM")
+schedule.every().day.at("23:28").do(job)
+print("✅ Scheduler started. Waiting for 11:28 PM daily...")
 
 while True:
     schedule.run_pending()
-    time.sleep(20)
+    time.sleep(20)     
