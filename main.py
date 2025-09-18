@@ -57,8 +57,8 @@ def job():
 
     # --- Step 3: Send email with yagmail (HTML version) ---
     try:
-        sender_email = os.environ["SENDER_EMAIL"]
-        password = os.environ["SENDER_PASS"]
+        sender_email = os.environ["EMAIL"]
+        password = os.environ["PASSWORD"]
         recipients = os.environ["RECIPIENTS"].split(",")
 
         # Build HTML email content
