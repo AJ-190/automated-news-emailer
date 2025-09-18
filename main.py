@@ -5,6 +5,7 @@ import yagmail
 from openai import OpenAI
 import schedule
 import time
+import os
 
 
 def job():
@@ -37,9 +38,11 @@ def job():
 
     # --- Step 2: Summarize using Algion API ---
     client = OpenAI(
-        api_key="123123",  
+        api_key=os.getenv("ALGION_KEY"),
         base_url="https://api.algion.dev/v1"
     )
+
+        
 
     def summarize(text):
         try:
@@ -59,8 +62,11 @@ def job():
 
     # --- Step 3: Send email with yagmail ---
     try:
-        sender_email = "adysamuel68@gmail.com"
-        password = "vfxj qepe yygj wkmi"  # Gmail App Password
+        
+
+        sender_email = os.getenv("EMAIL")
+        password = os.getenv("PASSWORD")
+        # Gmail App Password
         recipients = [
             "adysamuel67@gmail.com",
             "adysamuel69@gmail.com",
