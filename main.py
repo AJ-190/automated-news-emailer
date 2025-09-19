@@ -27,8 +27,10 @@ def job():
         title = entry.get("title")
         link = entry.get("link")
         summary = entry.get("summary", "")
+        if "media_thumbnail in entry and entry["media_thumbnial"]:
+            image_url = entry["media_thumbnail"][0]["url"]
 
-        items.append({"Headline": title, "Link": link, "Summary": summary})
+        items.append({"Headline": title, "image":image_url,"Link": link, "Summary": summary})
         print(f"✅ Processed entry {i+1}: {title}")
 
     df = pd.DataFrame(items)
@@ -104,6 +106,12 @@ def job():
             }
             .link:hover {
               background: #21867a;
+            }
+            .news-image {
+              max_width: 100%;
+              height: auto;
+              border_radius: 8px;
+              margin_bottom: 10px;
             }
           </style>
         </head>
