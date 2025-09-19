@@ -27,8 +27,8 @@ def job():
         title = entry.get("title")
         link = entry.get("link")
         summary = entry.get("summary", "")
-        if "media_thumbnail in entry and entry["media_thumbnial"]:
-            image_url = entry["media_thumbnail"][0]["url"]
+        if "media_thumbnail in entry and entry['media_thumbnail']:
+            image_url = entry['media_thumbnail'][0]['url']
 
         items.append({"Headline": title, "image":image_url,"Link": link, "Summary": summary})
         print(f"✅ Processed entry {i+1}: {title}")
