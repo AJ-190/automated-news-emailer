@@ -35,7 +35,7 @@ def job():
 
     # --- Step 2: Summarize using Algion API ---
     client = OpenAI(
-        api_key=os.environ["123123"],
+        api_key="123123",
         base_url="https://api.algion.dev/v1"
     )
 
