@@ -22,24 +22,24 @@ def job():
 
     # filtering and searching for entries
     data = []  # store the fetched entries
-    feed = None  # Initialize feed
     try:
         feed = feedparser.parse(response.content)
         print(f"Total entries: {len(feed.entries)}")
         for i, entry in enumerate(feed.entries[:15]):
             title = entry.get('title')
             link = entry.get('link')
-            summary = entry.get('summary')
+            summary = entry.get('summary', '')
             image_url = None
             if 'media_thumbnail' in entry and entry['media_thumbnail']:
                 image_url = entry['media_thumbnail'][0]['url']
 
             data.append({
                 "title": title,
-                "links": link,
+                "link": link,
                 "summary": summary,
                 "image_url": image_url
             })
+            print(f"✅ Processed entry {i+1}: {title}")
 
     except Exception as e:
         print(f"Error while retrieving the data entries {e}")
@@ -56,14 +56,18 @@ def job():
         )
 
         def summarization(text):
-            responses = client.chat.completions.create(
-                model='gpt-4.1',
-                messages=[
-                    {"role": 'system', "content": 'You are a helpful assistant for searching for news articles'},
-                    {"role": 'user', "content": f"Rewrite the news summary in a very professional and appealing way: \n\n {text}"}
-                ]
-            )
-            return responses.choices[0].message.content.strip()
+            try:
+                responses = client.chat.completions.create(
+                    model='gpt-4.1',
+                    messages=[
+                        {"role": 'system', "content": 'You are a helpful assistant for searching for news articles'},
+                        {"role": 'user', "content": f"Rewrite the news summary in a very professional and appealing way: \n\n {text}"}
+                    ]
+                )
+                return responses.choices[0].message.content.strip()
+            except Exception as e:
+                print(f"Error summarizing: {e}")
+                return text
 
     except Exception as e:
         print(f"Error while communicating with the chatbot: {e}")
@@ -77,11 +81,8 @@ def job():
     try:
         sender_mail = os.getenv("SENDER_EMAIL")    # 🔑 from env
         password = os.getenv("EMAIL_PASSWORD")     # 🔑 from env
-        recipients = [
-            'adysamuel67@gmail.com',
-            'adysamuel69@gmail.com',
-            'bensonofosuappiah9@gmail.com'
-        ]
+        recipients = os.getenv["RECIPIENTS"]
+        
 
         html_content = """
         <html>
@@ -127,31 +128,31 @@ def job():
                   background: #21867a;
                 }
                 .news-image {
-                    max-width: 100%;
-                    height: auto;
-                    border-radius: 8px;
-                    margin-bottom: 10px;
+                  max-width: 100%;
+                  height: auto;
+                  border-radius: 8px;
+                  margin-bottom: 10px;
                 }
               </style>
             </head>
             <body>
-              <h2>I have improved it by including images</h2>
+              <h2>🌍 Daily France24 Digest</h2>
         """
 
         # Loop through rows and add them as styled cards
         for _, row in df.iterrows():
+            html_content += '<div class="news-card">'
             if row['image_url']:
                 html_content += f'<img src="{row["image_url"]}" class="news-image" alt="News Image">'
             html_content += f"""
-            <div class="news-card">
               <div class="title">{row['title']}</div>
               <div class="summary">{row['professional']}</div>
-              <a class="link" href="{row['links']}">Read Full Article</a>
+              <a class="link" href="{row['link']}">Read Full Article</a>
             </div>
             """
 
         html_content += """
-        </body>
+            </body>
         </html>
         """
     except Exception as e:

@@ -3,4 +3,7 @@ feedparser
 pandas
 yagmail
 openai
-premailer
+python-dotenv
+htmldocx
+beautifulsoup4
+lxml
