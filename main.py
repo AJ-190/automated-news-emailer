@@ -4,141 +4,172 @@ import feedparser
 import pandas as pd
 import yagmail
 from openai import OpenAI
-from premailer import transform
-
+from htmldocx import transform  # (assuming you installed this)
 
 def job():
-    print("🚀 Running the news digest job...")
-
-    # --- Step 1: Get news from RSS ---
-    RSS_URL = "https://www.france24.com/en/rss"
+    # Accessing the url
+    print('Running the news digest...')
+    RSS_URL = "https://www.france24.com/en/france/rss"
     headers = {"User-Agent": "Mozilla/5.0"}
+
+    # getting response
     try:
-        response = requests.get(RSS_URL, headers=headers, timeout=10)
+        response = requests.get(RSS_URL, headers=headers)
         response.raise_for_status()
     except requests.exceptions.RequestException as e:
-        print(f"❌ Error fetching RSS feed: {e}")
-        return
+        print(f'Error while fetching calling requests, {e}')
+        return  # Exit if there's an error
 
-    feed = feedparser.parse(response.content)
+    # filtering and searching for entries
+    data = []  # store the fetched entries
+    feed = None  # Initialize feed
+    try:
+        feed = feedparser.parse(response.content)
+        print(f"Total entries: {len(feed.entries)}")
+        for i, entry in enumerate(feed.entries[:15]):
+            title = entry.get('title')
+            link = entry.get('link')
+            summary = entry.get('summary')
+            image_url = None
+            if 'media_thumbnail' in entry and entry['media_thumbnail']:
+                image_url = entry['media_thumbnail'][0]['url']
 
-    items = []
-    for i, entry in enumerate(feed.entries[:15]):
-        title = entry.get("title")
-        link = entry.get("link")
-        summary = entry.get("summary", "")
+            data.append({
+                "title": title,
+                "links": link,
+                "summary": summary,
+                "image_url": image_url
+            })
 
-        items.append({"Headline": title, "Link": link, "Summary": summary})
-        print(f"✅ Processed entry {i+1}: {title}")
+    except Exception as e:
+        print(f"Error while retrieving the data entries {e}")
+        return  # Exit if there's an error
 
-    df = pd.DataFrame(items)
+    df = pd.DataFrame(data)
+    df.to_csv('news.csv', index=False, encoding='utf-8')
 
-    # --- Step 2: Summarize using Algion API ---
-    client = OpenAI(
-        api_key=os.environ["ALGION_API_KEY"],
-        base_url="https://api.algion.dev/v1"
-    )
+    # Chatbot set up
+    try:
+        client = OpenAI(
+            api_key=os.getenv("OPENAI_API_KEY"),   # 🔑 from env
+            base_url=os.getenv("OPENAI_BASE_URL", "https://api.algion.dev/v1")
+        )
 
-    def summarize(text):
-        try:
-            response = client.chat.completions.create(
-                model="gpt-4.1",
+        def summarization(text):
+            responses = client.chat.completions.create(
+                model='gpt-4.1',
                 messages=[
-                    {"role": "system", "content": "You are a helpful assistant."},
-                    {"role": "user", "content": f"Rewrite this news summary in a professional and appealing way:\n\n{text}"}
+                    {"role": 'system', "content": 'You are a helpful assistant for searching for news articles'},
+                    {"role": 'user', "content": f"Rewrite the news summary in a very professional and appealing way: \n\n {text}"}
                 ]
             )
-            return response.choices[0].message.content.strip()
-        except Exception as e:
-            print(f"⚠️ Summarization error: {e}")
-            return text
+            return responses.choices[0].message.content.strip()
 
-    df["professional"] = df["Summary"].apply(summarize)
+    except Exception as e:
+        print(f"Error while communicating with the chatbot: {e}")
+        return  # Exit if there's an error
 
-    # --- Step 3: Send email with yagmail (HTML version) ---
+    # applying the function
+    df["professional"] = df["summary"].apply(summarization)
+
+    print("News digest generated and summarized successfully!")
+
     try:
-        sender_email = os.environ["SENDER_EMAIL"]
-        password = os.environ["SENDER_PASS"]
-        recipients = os.environ["RECIPIENTS"].split(",")
+        sender_mail = os.getenv("SENDER_EMAIL")    # 🔑 from env
+        password = os.getenv("EMAIL_PASSWORD")     # 🔑 from env
+        recipients = [
+            'adysamuel67@gmail.com',
+            'adysamuel69@gmail.com',
+            'bensonofosuappiah9@gmail.com'
+        ]
 
-        # Build HTML email content
         html_content = """
         <html>
-        <head>
-          <style>
-            body {
-              font-family: Arial, sans-serif;
-              background: #f4f4f9;
-              padding: 20px;
-              color: #333;
-            }
-            h2 {
-              color: #2a9d8f;
-            }
-            .news-card {
-              background: #fff;
-              padding: 15px;
-              margin-bottom: 15px;
-              border-radius: 10px;
-              box-shadow: 0px 2px 5px rgba(0,0,0,0.1);
-            }
-            .headline {
-              font-size: 18px;
-              font-weight: bold;
-              margin-bottom: 5px;
-              color: #264653;
-            }
-            .summary {
-              font-size: 14px;
-              color: #555;
-              margin-bottom: 8px;
-            }
-            .link {
-              display: inline-block;
-              margin-top: 8px;
-              padding: 6px 12px;
-              background: #2a9d8f;
-              color: white;
-              text-decoration: none;
-              border-radius: 6px;
-            }
-            .link:hover {
-              background: #21867a;
-            }
-          </style>
-        </head>
-        <body>
-          <h2>🌍 Daily France24 Digest</h2>
+            <head>
+              <style>
+                body {
+                  font-family: Arial, sans-serif;
+                  background: #f4f4f9;
+                  padding: 20px;
+                  color: #333;
+                }
+                h2 {
+                  color: #2a9d8f;
+                }
+                .news-card {
+                  background: #fff;
+                  padding: 15px;
+                  margin-bottom: 15px;
+                  border-radius: 10px;
+                  box-shadow: 0px 2px 5px rgba(0,0,0,0.1);
+                }
+                .title {
+                  font-size: 24px;
+                  font-weight: bold;
+                  margin-bottom: 5px;
+                  color: #264653;
+                }
+                .summary {
+                  font-size: 14px;
+                  color: #555;
+                  margin-bottom: 8px;
+                }
+                .link {
+                  display: inline-block;
+                  margin-top: 8px;
+                  padding: 6px 12px;
+                  background: #2a9d8f;
+                  color: white;
+                  text-decoration: none;
+                  border-radius: 6px;
+                }
+                .link:hover {
+                  background: #21867a;
+                }
+                .news-image {
+                    max-width: 100%;
+                    height: auto;
+                    border-radius: 8px;
+                    margin-bottom: 10px;
+                }
+              </style>
+            </head>
+            <body>
+              <h2>I have improved it by including images</h2>
         """
 
+        # Loop through rows and add them as styled cards
         for _, row in df.iterrows():
+            if row['image_url']:
+                html_content += f'<img src="{row["image_url"]}" class="news-image" alt="News Image">'
             html_content += f"""
             <div class="news-card">
-              <div class="headline">{row['Headline']}</div>
+              <div class="title">{row['title']}</div>
               <div class="summary">{row['professional']}</div>
-              <a class="link" href="{row['Link']}">Read Full Article</a>
+              <a class="link" href="{row['links']}">Read Full Article</a>
             </div>
             """
 
-        html_content += "</body></html>"
-
-        # Inline CSS
-        inlined_html = transform(html_content)
-
-        # Send styled HTML email
-        yag = yagmail.SMTP(user=sender_email, password=password)
-        yag.send(
-            to=recipients,
-            subject="Daily France24 Digest 🌍",
-            contents=[inlined_html],
-            headers={"from": "Addy's Automated News"}
-        )
-
-        print("📧 Styled HTML Email sent successfully!")
-
+        html_content += """
+        </body>
+        </html>
+        """
     except Exception as e:
-        print(f"❌ Error sending email: {e}")
+        print(f"Error while preparing email HTML: {e}")
+        return
 
+    inline_html = transform(html_content)
 
-if __name__ == "__main__":
-    job()
+    for user in recipients:
+        print(f'Sending to {user}')
+        try:
+            yag = yagmail.SMTP(user=sender_mail, password=password)
+            yag.send(
+                to=user,
+                subject='Daily France24 Digest',
+                contents=[inline_html],
+                headers={"From": "Addys Automated News"}
+            )
+            print(f'Email sent to {user}')
+        except Exception as e:
+            print(f'Error while sending email to {user}: {e}')
