@@ -19,7 +19,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install requests feedparser pandas yagmail openai schedule
+          pip install r
 
       - name: Run script
         env:
