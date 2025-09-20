@@ -4,7 +4,7 @@ import feedparser
 import pandas as pd
 import yagmail
 from openai import OpenAI
-from htmldocx import transform  # (assuming you installed this)
+from premailer import transform 
 
 def job():
     # Accessing the url
